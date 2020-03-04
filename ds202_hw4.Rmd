@@ -1,0 +1,112 @@
+---
+title: "HW4 Solutions"
+author: "Rushal Sohal; github: rsohal"
+date: "3/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+**1.**
+
+```{r}
+weight0 <- ChickWeight %>% filter(Time == 0) %>% group_by(Diet) %>% summarize(num_chicks = n(), avg_weight = mean(weight), sd_weight = sd(weight))
+weight0
+```
+
+
+<!-- 5 pts of extra credit: construct a ggplot that shows average weights by diet with an interval (shown as a line) of +- the standard deviation around the averages. -->
+```{r}
+ggplot(weight0, aes(x=Diet, y=avg_weight)) + geom_point() + geom_errorbar(aes(ymin = avg_weight-sd_weight, ymax = avg_weight+sd_weight)) + ggtitle('Extra Credit: Average Weight by Diet') + xlab('Diet') + ylab('Average Weight')
+```
+
+
+
+**2.**
+
+```{r}
+complete <- ChickWeight %>% group_by(Chick) %>% mutate(num_obs = n()) %>% ungroup() %>% filter(num_obs == 12)
+head(complete, n=3)
+```
+
+
+**3.**
+
+```{r}
+complete <- complete %>% group_by(Chick) %>% mutate(weightgain = (weight - weight[Time==0]))
+head(complete, n=3)
+```
+
+
+
+**4.**
+
+
+```{r}
+filter(complete, Time==21) %>% ggplot(aes(x = reorder(Diet, weightgain, FUN = median), y = weightgain)) + geom_boxplot() + ylim(0,350) + ggtitle('Weight Gain by Diet for Day 21') + xlab('Diet') + ylab('Weight Gain')
+```
+
+Diet 3 has the highest on average weight gain on Day 21 whereas Diet 1 has the least. Diet 4 has the least variation or deviation.
+
+
+
+**5.**
+```{r}
+print(complete %>% filter(Time==21) %>% arrange(desc(weightgain)) %>% head(1))
+complete %>% filter(Time==21) %>% arrange(weightgain) %>% head(1)
+```
+
+Graphs for weight gain by chick and by diet.
+```{r}
+complete %>% filter(Time==21) %>% ggplot(aes(x=Chick, y=weightgain)) + geom_point() + ylab('Weightgain') + ggtitle('Weightgain by Chick')
+complete %>% filter(Time==21) %>% ggplot(aes(x=Diet, y=weightgain)) + geom_point() + ylab('Weightgain') + ggtitle('Weightgain by Diet')
+```
+
+Chick 35 gained the most weight (=332) and was on Diet 3. Chick 24 gained the least (=32) and was on Diet 2.
+
+**6.**
+
+```{r}
+complete %>% filter(Time==0) %>% arrange(weight) %>% head(1)
+```
+
+```{r}
+complete %>% filter(Time==0) %>% arrange(desc(weight)) %>% head(1)
+```
+```{r}
+plot1 <- complete %>% filter(Chick == 27|  Chick == 19) %>% ggplot(aes(x=Time, y=weight, group=Chick, color=Chick)) + geom_line() + geom_point() + ggtitle('Weight over Time')
+plot1
+```
+
+
+
+
+
+**7.**
+
+```{r}
+tmp <- complete %>% group_by(Time) %>% summarize(avg = mean(weight)) 
+plot2 <- complete %>% group_by(Chick) %>% filter(Chick ==27 | Chick == 19) %>% ggplot() + geom_line(aes(x=Time, y=weight, group=Chick, color=Chick))+ geom_line(data=tmp, aes(x=Time, y=avg))
+plot2
+```
+
+The three trajectories look similar - exponentially increasing. However, the mean trajectory is greater or of higher value compared to highest and lowest weight chicks.
+
+
+
+**8.**
+Realtion between the median growth trajectory and the chicks with the least and the most weight (at time 0) for all chicks.
+```{r}
+tmp <- group_by(complete, Time) %>% summarise(median = median(weightgain))
+plot2 + geom_smooth(data = tmp, aes(x=Time, y = median, color ="median"), se=F) +ylim(0,300)
+```
+
+Overall, median and lowest/highest weight chick follow a similar trend - increasing (exponential)r. On Day 20, all 3 - median, maximum, and minimum - have a similar growth rate.
+
